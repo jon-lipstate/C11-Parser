@@ -1,0 +1,15 @@
+# remove everything
+*
+# re-include everything that has an extension
+!*.*
+*.exe
+*.pdb
+rtk.csv
+*trash*
+*temp*
+*scratch*
+notes.md
+*.obj
+*.rdbg
+*.spall
+ols.json

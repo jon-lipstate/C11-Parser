@@ -117,6 +117,31 @@ scan :: proc(t: ^Tokenizer) -> Token {
 		case '=':
 			kind = .Assignment_Divide
 			n_consume += 1
+		case '/':
+			pos := get_pos(t)
+			kind = .Single_Line_Comment
+			for t.ch != '\n' {advance_char(t)}
+			end := t.offset
+			if t.src[t.offset - 1] == '\r' {
+				end -= 1
+			}
+			lit = t.src[start:end]
+
+			return Token{pos = pos, kind = kind, text = lit}
+		case '*':
+			pos := get_pos(t)
+			advance_char(t)
+			kind = .Multi_Line_Comment
+			for {
+				if t.ch == '*' && peek_char(t) == '/' {
+					advance_char(t)
+					advance_char(t)
+					break
+				}
+				advance_char(t)
+			}
+			lit = t.src[start:t.offset]
+			return Token{pos = pos, kind = kind, text = lit}
 		}
 	case '%':
 		switch peek_char(t) {
@@ -249,15 +274,22 @@ scan :: proc(t: ^Tokenizer) -> Token {
 		return Token{pos = pos, kind = kind, text = lit}
 	}
 	//////
-	if is_alpha(t.ch) {
-
-	} else if is_digit(t.ch) {
+	if is_digit(t.ch) {
 		return scan_number(t)
+	} else if is_alpha(t.ch) {
+		pos := get_pos(t)
+		for is_alpha(t.ch) {advance_char(t)}
+		lit = t.src[start:t.offset]
+		if lit in KEYWORDS {
+			kind = KEYWORDS[lit]
+		} else {
+			kind = .Identifier
+		}
+		return Token{kind = kind, text = lit, pos = pos}
 	} else {
-		fmt.panicf("Failed to parse ", rune(t.ch))
+		fmt.panicf("Failed to parse <%v>", rune(t.ch))
 	}
-	fmt.println("failed to parse", rune(t.ch))
-	unimplemented()
+	fmt.panicf("Failed to parse <%v>", rune(t.ch))
 }
 
 scan_number :: proc(t: ^Tokenizer) -> Token {

@@ -2,7 +2,7 @@ package c11
 
 import "core:fmt"
 import "core:os"
-
+// TODO: Support UTF-8 to be C11 compliant
 Tokenizer :: struct {
 	// Immutable data
 	path:       string,
@@ -34,6 +34,7 @@ scan :: proc(t: ^Tokenizer) -> Token {
 	start := t.offset
 	lit: string
 	kind := Token_Kind.Invalid
+	pos := get_pos(t)
 
 	trivial_parse := true
 	switch t.ch {
@@ -65,7 +66,6 @@ scan :: proc(t: ^Tokenizer) -> Token {
 		trivial_parse = false
 	}
 	if trivial_parse {
-		pos := get_pos(t)
 		advance_char(t)
 		lit = t.src[start:t.offset]
 		return Token{text = lit, kind = kind, pos = pos}
@@ -118,7 +118,6 @@ scan :: proc(t: ^Tokenizer) -> Token {
 			kind = .Assignment_Divide
 			n_consume += 1
 		case '/':
-			pos := get_pos(t)
 			kind = .Single_Line_Comment
 			for t.ch != '\n' {advance_char(t)}
 			end := t.offset
@@ -129,7 +128,6 @@ scan :: proc(t: ^Tokenizer) -> Token {
 
 			return Token{pos = pos, kind = kind, text = lit}
 		case '*':
-			pos := get_pos(t)
 			advance_char(t)
 			kind = .Multi_Line_Comment
 			for {
@@ -267,17 +265,14 @@ scan :: proc(t: ^Tokenizer) -> Token {
 		medium_parse = false
 	}
 	if medium_parse {
-		pos := get_pos(t)
 		for _ in 0 ..< n_consume {advance_char(t)}
 		lit = t.src[start:t.offset]
-		fmt.println("lit", lit)
 		return Token{pos = pos, kind = kind, text = lit}
 	}
 	//////
 	if is_digit(t.ch) {
 		return scan_number(t)
 	} else if is_alpha(t.ch) {
-		pos := get_pos(t)
 		for is_alpha(t.ch) {advance_char(t)}
 		lit = t.src[start:t.offset]
 		if lit in KEYWORDS {

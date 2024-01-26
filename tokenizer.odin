@@ -273,7 +273,7 @@ scan :: proc(t: ^Tokenizer) -> Token {
 	if is_digit(t.ch) {
 		return scan_number(t)
 	} else if is_alpha(t.ch) {
-		for is_alpha(t.ch) {advance_char(t)}
+		for is_alpha(t.ch) || is_digit(t.ch) {advance_char(t)}
 		lit = t.src[start:t.offset]
 		if lit in KEYWORDS {
 			kind = KEYWORDS[lit]
